@@ -23,9 +23,9 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = '24k+gl5uvn9b9whbvvder(nwttgc$(j#(x_d!g^2^av&4mdkb%'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DEBUG',false) == 'True'
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [host for host in os.environ.get('ALLOWED_HOSTS', 'localhost').split(",")]
 
 
 # Application definition
@@ -37,6 +37,8 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'Users',
+    'DataAnalysis',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -100,3 +102,29 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.8/howto/static-files/
 
 STATIC_URL = '/static/'
+
+if os.path.isfile('/run/secrets/elastic_cloud_auth'):
+    with open('/run/secrets/elastic_cloud_auth', 'r') as f:
+        ES_AUTH = f.read().strip()
+else:
+    ES_AUTH = ""
+
+ES_HOST = os.environ.get('ES_HOST', 'localhost')
+
+ES_INDEX = os.environ.get('ES_INDEX', 'stack')
+ES_INDEX_SETTINGS = {
+    'number_of_shards': 1,
+    'number_of_replicas': 0,
+}
+
+ES_CONNECTIONS = {
+    'default': {
+        'hosts': [{
+            'host': ES_HOST,
+            'http_auth': ES_AUTH,
+            'verify_certs': False,
+            'use_ssl': os.environ.get('ES_USE_SSL', False) == 'True',
+            'port': os.environ.get('ES_PORT', '9200'),
+        }]
+    }
+}
